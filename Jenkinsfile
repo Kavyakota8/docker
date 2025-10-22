@@ -2,32 +2,56 @@ pipeline {
     agent any
 
     stages {
-        stage('Build') {
+
+        stage('Clean Workspace') {
             steps {
-                echo 'Build Docker Image'
-                bat '''
-                    docker build -t formappnew .
-                '''
+                echo 'Cleaning workspace...'
+                deleteDir()
             }
         }
 
-        stage('Run') {
+        stage('Checkout Code') {
             steps {
-                echo 'Run application in Docker container'
-                bat '''
-                    docker rm -f mycontainer || exit 0
-                    docker run -d -p 5000:5000 --name mycontainer formappnew
-                '''
+                echo 'Pulling latest code from GitHub...'
+                git branch: 'main', url: 'https://github.com/Kavyakota8/SmartAppointment-DevOps.git'
+            }
+        }
+
+        stage('Check Workspace Files') {
+            steps {
+                echo 'Verifying files in workspace...'
+                bat 'dir'
+                bat 'dir k8s'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                echo 'Skipping Docker build on Windows for now'
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                echo 'Skipping Docker push on Windows for now'
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                echo 'Deploying application to Kubernetes...'
+                bat 'kubectl apply -f k8s/deployment.yaml'
+                bat 'kubectl apply -f k8s/service.yaml'
             }
         }
     }
 
     post {
-        failure {
-            echo 'Pipeline failed. please check the logs.'
-        }
         success {
-            echo 'Pipeline executed successfully.'
+            echo 'Deployment completed successfully!'
+        }
+        failure {
+            echo 'Deployment failed. Please check logs above.'
         }
     }
 }
